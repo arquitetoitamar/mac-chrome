@@ -11,9 +11,12 @@
 # Marketplace Connect — Análise de Produtos
 
 **Extensão Chrome (Manifest V3) para quem vende em marketplace.** Pontua a
-qualidade do anúncio na própria página, acompanha o preço dos concorrentes ao
-longo do tempo, calcula margem e — nos anúncios do próprio usuário — permite
-editar e gerar mídia pela conta **Marketplace Connect**.
+qualidade do anúncio na própria página, diagnostica título e descrição, mostra
+em que posição ele aparece na busca, acompanha o preço dos concorrentes ao
+longo do tempo e calcula margem.
+
+**Somente leitura.** A extensão não altera nenhum anúncio — nem o seu. Ela lê,
+mede e informa; o que fazer com isso é decisão sua, no painel do marketplace.
 
 👉 **Conta e chave de API:** [marketplaces.tiops.com.br](https://marketplaces.tiops.com.br)
 
@@ -50,6 +53,15 @@ anúncios.
 - **Score do anúncio** — painel na própria página com 8 indicadores
   (descrição, imagens, SEO do título, especificações, benefícios, estrutura,
   itens inclusos e sinais de confiança), nota de 0 a 100 em cada.
+- **Diagnóstico de título** — contagem de caracteres com o corte de 60 que a
+  listagem aplica, caixa alta, emoji, palavra de vitrine ocupando espaço de
+  termo de busca, repetição e ausência de número (modelo, medida, capacidade).
+- **Diagnóstico de descrição** — tamanho, parágrafos, listas, se diz o que vem
+  na caixa, se menciona garantia, e quantos termos ela acrescenta além dos que
+  já estão no título — que é o que amplia a indexação.
+- **Posição na busca** — procura o anúncio nos primeiros 200 resultados de um
+  termo que você informa (a extensão sugere um a partir do título) e devolve a
+  colocação e a página. Sob clique, nunca automático.
 - **Monitoramento de concorrentes** — marque um anúncio e a extensão registra
   preço, quantidade vendida aproximada e avaliação ao longo do tempo. O
   histórico vira gráfico no popup. Intervalo configurável de 1 a 24 horas.
@@ -58,9 +70,8 @@ anúncios.
 - **Calculadora de margem** — custo, margem desejada, comissão, frete e imposto
   entram; preço de venda ideal, lucro líquido e diferença percentual em relação
   ao concorrente saem, já com a taxa fixa de produtos de menor valor.
-- **Com a conta conectada** — reconhece seus próprios anúncios, mostra saldo de
-  créditos, compara seu preço com o do catálogo, edita título/preço/estoque/
-  descrição e gera fotos e vídeo do produto.
+- **Com a conta conectada** — reconhece que o anúncio é seu, mostra saldo de
+  créditos, compara seu preço com o do catálogo e consulta a posição na busca.
 
 O "vendidos" que o Mercado Livre expõe é sempre uma faixa aproximada
 (`+100`, `+1mil`), nunca o número exato — todo cálculo derivado dele herda essa

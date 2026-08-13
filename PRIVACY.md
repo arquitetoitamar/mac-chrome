@@ -23,22 +23,20 @@ publicitário.
 
 ## 2. Como os dados são usados
 
+**A extensão é somente leitura.** Ela não cria, altera nem apaga anúncio algum —
+nem os do próprio usuário. Toda operação que ela faz no servidor é consulta.
+
 - A chave de API é enviada **exclusivamente** para a API do Marketplace Connect,
-  no cabeçalho `x-api-key`, para autenticar as operações que o próprio usuário
-  solicita (consultar créditos, listar suas contas e anúncios, criar/editar
-  anúncios seus, gerar mídia).
+  no cabeçalho `x-api-key`, para autenticar as consultas que o próprio usuário
+  solicita (saldo de créditos, quais contas ele tem conectadas, se o anúncio
+  aberto é dele, comparação de preço no catálogo e posição na busca).
 - Dados de anúncios são usados para exibir diagnóstico, comparação de preços,
   histórico e alertas — sempre dentro do navegador do usuário.
-- Quando o usuário aciona uma função que depende do servidor, os parâmetros
-  daquela operação são enviados ao servidor para executá-la:
+- Quando o usuário aciona uma função que depende do servidor, só o necessário
+  para aquela consulta é enviado:
   - **análise de catálogo** — o ID do anúncio;
-  - **criação de anúncio** — título, descrição, preço, categoria e quantidade
-    que estiverem no formulário, e as URLs de imagem apenas se o usuário marcar
-    a caixa correspondente (desmarcada por padrão);
-  - **geração de foto e de vídeo com IA** — a URL da imagem do produto, o título
-    do anúncio e os parâmetros escolhidos. O processamento roda em serviços de
-    IA contratados pela Tiops. Nada é gerado sem clique explícito do usuário, e
-    cada operação consome créditos da conta dele.
+  - **posição na busca** — o termo digitado pelo usuário e o ID do anúncio,
+    para localizá-lo entre os resultados. Só roda sob clique.
 
 ## 3. Compartilhamento
 
@@ -47,14 +45,12 @@ análise de mercado ou qualquer finalidade não relacionada à função da exten
 Os únicos destinos de rede são:
 
 - `https://mcp.tiops.com.br` — API do Marketplace Connect, único servidor da
-  Tiops com que a extensão fala. Todas as operações de conta, inclusive saldo de
-  créditos e geração de mídia, passam por ele;
+  Tiops com que a extensão fala. Todas as consultas de conta passam por ele;
 - `https://*.mercadolivre.com.br` / `https://*.mercadolibre.com` — leitura das
   páginas públicas de anúncios monitorados.
 
-Para executar a geração de mídia, o servidor da Tiops repassa a imagem e o texto
-enviados pelo usuário a provedores de IA contratados, que atuam como operadores
-e não recebem a identidade nem a chave do usuário.
+Nenhum dado do usuário é repassado a provedor de IA: a extensão não gera
+conteúdo, não processa imagem e não consome crédito de IA.
 
 ## 4. Armazenamento e retenção
 

@@ -1,5 +1,7 @@
 // Marketplace Connect — Análise de Produtos: content script
-// Diagnóstico com gauges injetados na página + editor de fotos + clonagem + clips
+// Somente leitura: gauges de qualidade injetados na página, diagnóstico de
+// título e descrição, posição na busca e calculadora de margem.
+// A extensão não altera nenhum anúncio, nem o do próprio usuário.
 (() => {
   const MCSPY_CSS = `
     .mcspy-wrap{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -35,8 +37,6 @@
     .mcspy-edit-field label{display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:600}
     .mcspy-edit-field textarea,.mcspy-edit-field input{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box}
     .mcspy-edit-field textarea:focus,.mcspy-edit-field input:focus{outline:none;border-color:#2968c8}
-    .mcspy-edit h3{margin:0 0 12px 0;font-size:14px}
-    .mcspy-edit .mcspy-actions{flex-direction:row}
     .mcspy-score-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:10px;background:#f8f9fa;border-radius:8px}
     .mcspy-score-circle{width:56px;height:56px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;color:#fff;flex-shrink:0}
     .mcspy-score-circle.green{background:#1e7e34}.mcspy-score-circle.yellow{background:#e6a817}.mcspy-score-circle.red{background:#c0392b}
@@ -49,17 +49,11 @@
     .mcspy-gauge-bar-fill{height:100%;border-radius:3px;transition:width 0.5s}
     .mcspy-gauge-bar-fill.green{background:#1e7e34}.mcspy-gauge-bar-fill.yellow{background:#e6a817}.mcspy-gauge-bar-fill.red{background:#c0392b}
     .mcspy-gauge-label{display:flex;justify-content:space-between;color:#666}
-    .mcspy-media h3{margin:0 0 10px 0;font-size:14px}.mcspy-media h4{margin:12px 0 6px 0;font-size:12px;color:#555}
-    .mcspy-media-section{margin-bottom:10px}
-    .mcspy-media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:8px}
-    .mcspy-media-thumb{border-radius:4px;overflow:hidden;border:2px solid transparent}
-    .mcspy-media-thumb:hover{border-color:#2968c8}
-    .mcspy-media-thumb img{width:100%;height:56px;object-fit:cover;display:block}
-    .mcspy-media .mcspy-result{margin-top:8px}
-    .mcspy-credit-info{font-size:11px;color:#888;margin-top:4px;text-align:right}
-    .mcspy-photo-count{display:flex;gap:6px;justify-content:center;margin:8px 0}
-    .mcspy-photo-count .mcspy-btn{font-size:14px;padding:10px 16px}
-    .mcspy-create-ad h4{margin:0 0 10px 0;font-size:13px;color:#2968c8}
+    .mcspy-seo h3{margin:0 0 8px 0;font-size:14px}
+    .mcspy-seo-preview{font-size:12px;line-height:1.4;padding:8px;background:#f8f9fa;border-radius:6px;word-break:break-word}
+    .mcspy-seo-cut{color:#bbb}
+    .mcspy-seo-item{display:flex;gap:8px;align-items:flex-start;font-size:12px;padding:3px 0;line-height:1.35}
+    .mcspy-seo-item b{flex-shrink:0;width:12px}
   `;
 
   const PANEL_ID = "mcspy-root-host";
@@ -185,25 +179,14 @@
     storeCache = await chrome.runtime.sendMessage({ type: "GET_ALL" });
     return storeCache;
   }
+  // Só o saldo de créditos de integração. O saldo de IA saiu junto com a
+  // geração de mídia — a extensão não consome crédito de IA em lugar nenhum.
   async function refreshCredits() {
     const store = await getStore();
-    if (!store.apiKey) return { credits: "?", aiCredits: 0, can_generate: false, videoJobs: [] };
-    // Fetch integration credits + AI credits (via background to bypass CORS)
-    const [r, aiStatus] = await Promise.all([
-      chrome.runtime.sendMessage({ type: "CALL_MCP", action: "credits_status", params: {} }),
-      chrome.runtime.sendMessage({ type: "GET_AI_CREDITS" }),
-    ]);
+    if (!store.apiKey) return { credits: "?" };
+    const r = await chrome.runtime.sendMessage({ type: "CALL_MCP", action: "credits_status", params: {} });
     storeCache = await chrome.runtime.sendMessage({ type: "GET_ALL" });
-    const aiCredits = aiStatus?.credits ?? 0;
-    return {
-      credits: r.ok ? (r.data?.paid_credits_balance ?? r.data?.credits_balance ?? "?") : "?",
-      aiCredits: Number(aiCredits),
-      can_generate: Number(aiCredits) >= 10,
-      videoJobs: aiStatus?.recent_jobs || [],
-    };
-  }
-  async function callMcp(action, params = {}) {
-    return chrome.runtime.sendMessage({ type: "CALL_MCP", action, params });
+    return { credits: r.ok ? (r.data?.paid_credits_balance ?? r.data?.credits_balance ?? "?") : "?" };
   }
 
   // ========== SCORING ==========
@@ -254,7 +237,7 @@
     }).join("");
     const shipping = extractShipping();
     // Check if own listing (async, resolve later)
-    const actionsHtml = '<div class="mcspy-page-actions" id="mcspy-own-actions" style="display:none" role="toolbar" aria-label="Ações do anúncio"><button class="mcspy-page-btn" id="mcspy-btn-edit-inline" aria-label="Editar anúncio">✏️ Editar</button><button class="mcspy-page-btn" id="mcspy-btn-photos-inline" aria-label="Gerar fotos com IA">📸 Gerar Fotos</button><button class="mcspy-page-btn" id="mcspy-btn-video-inline" aria-label="Gerar vídeo UGC">🎬 Vídeo UGC</button></div>';
+    const actionsHtml = '';
     host.innerHTML = `<div class="mcspy-page-gauge"><div class="mcspy-page-gauge-header"><div class="mcspy-page-score ${scoreColor(diag.geral)}"><span class="mcspy-page-score-val">${diag.geral}</span></div><div class="mcspy-page-title">Score do Anúncio${shipping ? `<span style="display:block;font-size:11px;color:#666;font-weight:500;margin-top:2px">${escapeHtml(shipping)}</span>` : ''}<span style="display:block;font-size:10px;color:#aaa;font-weight:400">Marketplace Connect</span></div></div><div class="mcspy-page-circles">${circles}</div>${actionsHtml}</div>`;
     if (anchor.nextSibling) anchor.parentNode.insertBefore(host, anchor.nextSibling);
     else anchor.parentNode.appendChild(host);
@@ -309,8 +292,8 @@
     panelBody.innerHTML = `
       <div class="mcspy-tabs">
         <button class="mcspy-tab active" data-panel="panel-main">Info</button>
+        <button class="mcspy-tab" data-panel="panel-seo">🔤 SEO</button>
         <button class="mcspy-tab" data-panel="panel-calc">💰 Calculadora</button>
-        ${isOwn ? '<button class="mcspy-tab" data-panel="panel-edit">Editar</button><button class="mcspy-tab" data-panel="panel-media">Mídia</button>' : ''}
       </div>
       <div id="panel-main" class="mcspy-panel-tab active">
         <div class="mcspy-score-header">
@@ -330,13 +313,11 @@
           <button class="mcspy-btn" id="mcspy-analyze">🔎 Analisar</button>
           <button class="mcspy-btn" id="mcspy-copy">📋 Estratégia</button>
           <button class="mcspy-btn ${tracked?'mcspy-btn-active':''}" id="mcspy-track">${tracked?'★ Monitorando':'☆ Monitorar'}</button>
-          <button class="mcspy-btn mcspy-btn-primary" id="mcspy-create-ad">📢 Anunciar na minha conta</button>
         </div>
         ${!hasKey ? `<div class="mcspy-hint">Configure sua API key nas opções para desbloquear tudo.</div>` : ''}
         <div class="mcspy-result" id="mcspy-result"></div>
       </div>
-      <div id="panel-edit" class="mcspy-panel-tab"></div>
-      <div id="panel-media" class="mcspy-panel-tab"></div>
+      <div id="panel-seo" class="mcspy-panel-tab"></div>
       <div id="panel-calc" class="mcspy-panel-tab"></div>
     `;
 
@@ -348,8 +329,6 @@
     }));
 
     const resultBox = panelBody.querySelector("#mcspy-result");
-    const editPanel = panelBody.querySelector("#panel-edit");
-    const mediaPanel = panelBody.querySelector("#panel-media");
 
     // Estratégia — copia prompt otimizado
     panelBody.querySelector("#mcspy-copy").addEventListener("click", async () => {
@@ -387,25 +366,12 @@
       const res = await new Promise(r => chrome.runtime.sendMessage({ type: "ANALYZE_AD", ad }, r));
       if (!res || res.error) { resultBox.innerHTML = `<p class="mcspy-muted">${escapeHtml(res?.error || "Erro.")}</p>`; return; }
 
-      // Se detectou como próprio, ativa abas
-      if (res.isOwn && hasKey) {
-        isOwn = true;
-        // Adiciona abas se não existirem
-        if (!panelBody.querySelector('[data-panel="panel-edit"]')) {
-          const tabsRow = panelBody.querySelector(".mcspy-tabs");
-          tabsRow.innerHTML += '<button class="mcspy-tab" data-panel="panel-edit">Editar</button><button class="mcspy-tab" data-panel="panel-media">Mídia</button>';
-        }
-        editPanel.innerHTML = renderEditPanel(ad);
-        setupEditHandlers(editPanel, ad);
-        mediaPanel.innerHTML = renderMediaPanel(ad);
-        setupMediaHandlers(mediaPanel, ad, creds);
-        // Badge
-        if (!panelBody.querySelector(".mcspy-badge-own")) {
-          const badge = document.createElement("div");
-          badge.className = "mcspy-badge mcspy-badge-own";
-          badge.textContent = "✅ Seu anúncio (verificado)";
-          panelBody.querySelector(".mcspy-card")?.appendChild(badge);
-        }
+      // Anúncio próprio: só sinaliza. A extensão não escreve em nada.
+      if (res.isOwn && hasKey && !panelBody.querySelector(".mcspy-badge-own")) {
+        const badge = document.createElement("div");
+        badge.className = "mcspy-badge mcspy-badge-own";
+        badge.textContent = "✅ Seu anúncio (verificado)";
+        panelBody.querySelector(".mcspy-card")?.appendChild(badge);
       }
 
       // Renderiza resultado
@@ -422,89 +388,11 @@
       resultBox.innerHTML = parts.join("") || `<p class="mcspy-muted">Sem dados.</p>`;
     });
 
-    // Anunciar na minha conta
-    panelBody.querySelector("#mcspy-create-ad").addEventListener("click", async () => {
-      if (!hasKey) { resultBox.innerHTML = `<p class="mcspy-muted">Configure sua API key nas opções.</p>`; return; }
-      resultBox.innerHTML = `<p class="mcspy-muted">Buscando suas contas...</p>`;
-      const rList = await callMcp("list_accounts");
-      if (!rList.ok) { resultBox.innerHTML = `<p class="mcspy-muted">Erro: ${escapeHtml(rList.error||"")}</p>`; return; }
-      const meliAccs = (rList.data?.accounts || []).filter(a => a.marketplace === "meli");
-      if (!meliAccs.length) { resultBox.innerHTML = `<p class="mcspy-muted">Nenhuma conta ML conectada.</p>`; return; }
 
-      resultBox.innerHTML = `
-        <div class="mcspy-create-ad"><h4>📢 Criar anúncio na sua conta</h4>
-          <div class="mcspy-edit-field"><label>Conta destino</label><select id="select-meli-account">${meliAccs.map(a => `<option value="${escapeHtml(a.external_id)}">${escapeHtml(a.label||a.external_id)}</option>`).join("")}</select></div>
-          <div class="mcspy-edit-field"><label>Título</label><input type="text" id="input-ad-title" value="${escapeHtml(ad.title||'')}"/></div>
-          <div class="mcspy-edit-field"><label>Preço (R$)</label><input type="number" id="input-ad-price" value="${ad.price||''}" step="0.01"/></div>
-          <div class="mcspy-edit-field"><label>Categoria</label><input type="text" id="input-ad-category" value="${escapeHtml(ad.category||'')}"/></div>
-          <div class="mcspy-edit-field"><label>Quantidade</label><input type="number" id="input-ad-qty" value="10" min="1"/></div>
-          <div class="mcspy-edit-field"><label>Condição</label><select id="input-ad-condition"><option value="new">Novo</option><option value="used">Usado</option></select></div>
-          <div class="mcspy-edit-field"><label>Descrição</label><textarea id="input-ad-desc" rows="5">${escapeHtml(ad.description||'')}</textarea></div>
-          <label style="display:flex;gap:6px;align-items:flex-start;font-size:11px;color:#666;margin-bottom:8px">
-            <input type="checkbox" id="input-ad-use-pics" style="margin-top:2px;width:auto"/>
-            <span>Usar as ${Math.min((ad.images||[]).length, 6)} foto(s) desta página. Desmarcado por padrão: foto de outro vendedor é de quem a produziu — publicar sem autorização pode derrubar seu anúncio e sua conta.</span>
-          </label>
-          <p class="mcspy-muted" style="font-size:11px;margin:0 0 8px">Título e descrição vieram desta página como rascunho. Reescreva com as palavras do seu produto antes de publicar.</p>
-          <button class="mcspy-btn mcspy-btn-primary" id="btn-confirm-create">✅ Criar anúncio</button>
-          <div class="mcspy-result" id="create-result"></div>
-        </div>`;
-
-      panelBody.querySelector("#btn-confirm-create").addEventListener("click", async () => {
-        const cr = panelBody.querySelector("#create-result");
-        const meliUserId = panelBody.querySelector("#select-meli-account")?.value;
-        const title = panelBody.querySelector("#input-ad-title")?.value.trim();
-        const price = Number(panelBody.querySelector("#input-ad-price")?.value);
-        const category = panelBody.querySelector("#input-ad-category")?.value.trim();
-        const quantity = Number(panelBody.querySelector("#input-ad-qty")?.value);
-        const condition = panelBody.querySelector("#input-ad-condition")?.value;
-        const description = panelBody.querySelector("#input-ad-desc")?.value.trim();
-        if (!title || !price) { cr.innerHTML = `<p class="mcspy-muted">❌ Título e preço obrigatórios.</p>`; return; }
-        cr.innerHTML = `<p class="mcspy-muted">Criando...</p>`;
-        // Resolve categoria: aceita ID direto (MLB#####) ou busca pelo nome.
-        // Sem fallback hardcoded — anúncio em categoria errada é pior que erro.
-        let categoryId = null;
-        const directId = category.match(/^MLB\d+$/i);
-        if (directId) {
-          categoryId = category.toUpperCase();
-        } else if (category) {
-          try {
-            const catRes = await callMcp("search_categories", { q: (category.split(">").pop()||category).trim() });
-            const cats = Array.isArray(catRes.data) ? catRes.data : (catRes.data?.results || []);
-            if (cats[0]?.id) categoryId = cats[0].id;
-          } catch(_) {}
-        }
-        if (!categoryId) {
-          cr.innerHTML = `<p class="mcspy-muted">❌ Não achei a categoria. Digite o ID exato (ex: MLB438524) no campo Categoria e tente de novo.</p>`;
-          return;
-        }
-        const body = { title, price, category_id: categoryId, available_quantity: quantity, condition, currency_id: "BRL", buying_mode: "buy_it_now", listing_type_id: "gold_pro", meliUserId };
-        // Fotos só vão se o usuário marcar explicitamente — são de outro
-        // vendedor, e enviar por padrão transformava um clique em uso de
-        // imagem de terceiro sem que ele decidisse isso.
-        const usePics = panelBody.querySelector("#input-ad-use-pics")?.checked;
-        const pics = usePics ? (ad.images||[]).slice(0,6) : [];
-        if (pics.length) body.pictures = pics.map(url => ({ source: url }));
-        const createRes = await callMcp("create_item", body);
-        if (createRes.ok) {
-          const newId = String(createRes.data?.id || createRes.data?.item_id || "criado");
-          const safeId = /^MLB\d+$/i.test(newId) ? newId : "criado";
-          cr.innerHTML = safeId === "criado"
-            ? `<p class="mcspy-muted">✅ Anúncio criado.</p>`
-            : `<p class="mcspy-muted">✅ <a href="https://produto.mercadolivre.com.br/${safeId}" target="_blank">${safeId}</a></p>`;
-          if (description) await callMcp("update_description", { item_id: newId, text: description, meliUserId });
-        } else {
-          cr.innerHTML = `<p class="mcspy-muted">❌ ${escapeHtml(createRes.error || "Erro")}</p>`;
-        }
-      });
-    });
-
-    // Edit + Media panels (se isOwn desde o início)
-    if (isOwn && hasKey) {
-      editPanel.innerHTML = renderEditPanel(ad);
-      setupEditHandlers(editPanel, ad);
-      mediaPanel.innerHTML = renderMediaPanel(ad);
-      setupMediaHandlers(mediaPanel, ad, creds);
-    }
+    // SEO panel (diagnóstico local; a posição na busca é sob clique)
+    const seoPanel = panelBody.querySelector("#panel-seo");
+    seoPanel.innerHTML = renderSeoPanel(ad);
+    setupSeoHandlers(seoPanel, ad);
 
     // Calculadora panel (sempre visível)
     const calcPanel = panelBody.querySelector("#panel-calc");
@@ -512,155 +400,139 @@
     setupCalculatorHandlers(calcPanel, ad, creds);
   }
 
-  // ========== EDIT PANEL ==========
-  function renderEditPanel(ad) {
-    return `<div class="mcspy-edit"><h3>✏️ Editar Anúncio</h3>
-      <div class="mcspy-edit-field"><label>Título</label><textarea id="edit-title" rows="2">${escapeHtml(ad.title||"")}</textarea></div>
-      <div class="mcspy-edit-field"><label>Preço (R$)</label><input type="number" id="edit-price" value="${ad.price||""}" step="0.01"/></div>
-      <div class="mcspy-edit-field"><label>Estoque</label><input type="number" id="edit-stock" value="" placeholder="Quantidade"/></div>
-      <div class="mcspy-edit-field">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <label style="margin:0">Descrição</label>
-          <button class="mcspy-btn" id="btn-optimize-desc" style="font-size:11px;padding:2px 8px">🪄 Melhorar texto</button>
-        </div>
-        <textarea id="edit-description" rows="6">${escapeHtml(ad.description||"")}</textarea>
-      </div>
-      <div class="mcspy-actions"><button class="mcspy-btn mcspy-btn-primary" id="btn-save-changes">💾 Salvar</button><button class="mcspy-btn" id="btn-cancel-edit">Cancelar</button></div>
-      <div class="mcspy-result" id="edit-result"></div>
-      <div id="optimize-result" style="margin-top:8px;padding:8px;background:#f0f7ff;border-radius:6px;display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><strong style="font-size:12px">✨ Sugestão automática (modelo pronto, revise antes de usar)</strong><button class="mcspy-btn" id="btn-use-optimized" style="font-size:11px;padding:2px 8px">Usar esta</button></div>
-        <p id="optimized-text" style="font-size:12px;white-space:pre-wrap;margin:0"></p>
-      </div>
+  // ========== SEO / DESCRIÇÃO / RANKING ==========
+
+  // Leitura apenas. O diagnóstico de título e descrição roda local, sem rede.
+  // A posição na busca é a única parte que chama a API, e só sob clique.
+
+  const STOPWORDS = new Set(["de","da","do","das","dos","e","com","para","por","em","no","na","a","o","as","os","um","uma","pra","sem","kit","novo","nova","original","promocao","promoção","frete","gratis","grátis","envio","imediato","oferta","barato"]);
+
+  // Consulta sugerida: o que sobra do título depois de tirar conectivo e
+  // palavra de vitrine. É sugestão — o campo fica editável porque posição só
+  // significa alguma coisa junto do termo que a produziu.
+  function sugerirConsulta(title) {
+    return (title || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s]/g, " ")
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !STOPWORDS.has(w))
+      .slice(0, 5)
+      .join(" ");
+  }
+
+  function diagnosticarTitulo(title) {
+    const t = title || "";
+    const achados = [];
+    const n = t.length;
+
+    if (n < 20) achados.push({ nivel: "ruim", txt: `${n} caracteres — curto demais para descrever o produto` });
+    else if (n < 40) achados.push({ nivel: "meio", txt: `${n} caracteres — cabe mais atributo de busca` });
+    else if (n <= 60) achados.push({ nivel: "bom", txt: `${n} caracteres — dentro do que aparece inteiro na busca` });
+    else achados.push({ nivel: "meio", txt: `${n} caracteres — o que passa de 60 costuma ser cortado na listagem` });
+
+    if (t === t.toUpperCase() && /[A-ZÁÉÍÓÚÂÊÔÃÕÇ]/.test(t)) achados.push({ nivel: "ruim", txt: "Tudo em maiúscula — o ML penaliza e o comprador lê pior" });
+    if (/[🛑🔴🚀🔥💥⭐✅❗️★☆]/.test(t)) achados.push({ nivel: "ruim", txt: "Emoji ou símbolo no título — não é indexado e ocupa espaço" });
+    if (/\b(promo(ção|cao)|frete gr[áa]tis|imperd[íi]vel|oferta|barato|melhor pre[çc]o)\b/i.test(t)) achados.push({ nivel: "meio", txt: "Palavra de vitrine no título — não é termo de busca, gasta caractere" });
+
+    const palavras = t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").match(/\w{3,}/g) || [];
+    const repetida = palavras.find((w, i) => palavras.indexOf(w) !== i && !STOPWORDS.has(w));
+    if (repetida) achados.push({ nivel: "meio", txt: `"${repetida}" aparece mais de uma vez — repetição não melhora ranking` });
+
+    if (!/\d/.test(t)) achados.push({ nivel: "meio", txt: "Sem número — modelo, medida, capacidade ou quantidade ajudam quem busca por especificação" });
+
+    if (achados.every(a => a.nivel === "bom")) achados.push({ nivel: "bom", txt: "Nenhum problema estrutural encontrado" });
+    return achados;
+  }
+
+  function diagnosticarDescricao(desc, title) {
+    const d = desc || "";
+    const achados = [];
+    if (!d) return [{ nivel: "ruim", txt: "Sem descrição — é o campo que mais pesa depois do título" }];
+
+    const n = d.length;
+    if (n < 300) achados.push({ nivel: "ruim", txt: `${n} caracteres — curta; 600+ costuma converter melhor` });
+    else if (n < 600) achados.push({ nivel: "meio", txt: `${n} caracteres — aceitável, dá para desenvolver mais` });
+    else achados.push({ nivel: "bom", txt: `${n} caracteres` });
+
+    const paragrafos = d.split(/\n\s*\n/).filter(p => p.trim()).length;
+    if (paragrafos <= 1) achados.push({ nivel: "ruim", txt: "Bloco único de texto — quebrar em parágrafos aumenta a leitura até o fim" });
+    else achados.push({ nivel: "bom", txt: `${paragrafos} parágrafos` });
+
+    if (!/[•\-\*]\s/.test(d)) achados.push({ nivel: "meio", txt: "Sem lista — comprador varre bullet, não lê parágrafo corrido" });
+    if (!/(inclui|cont[ée]m|acompanha|vem com|incluso)/i.test(d)) achados.push({ nivel: "meio", txt: "Não diz o que vem na caixa — origem comum de pergunta e de reclamação" });
+    if (!/(garantia|nota fiscal)/i.test(d)) achados.push({ nivel: "meio", txt: "Sem menção a garantia ou nota fiscal" });
+
+    // Descrição que só repete o título não acrescenta termo novo à indexação
+    const tTermos = new Set((title || "").toLowerCase().match(/\w{4,}/g) || []);
+    const dTermos = new Set((d.toLowerCase().match(/\w{4,}/g) || []));
+    const novos = [...dTermos].filter(w => !tTermos.has(w));
+    if (novos.length < 15) achados.push({ nivel: "meio", txt: `Só ${novos.length} termos que não estão no título — a descrição é onde entram as variações de busca` });
+    else achados.push({ nivel: "bom", txt: `${novos.length} termos além dos do título` });
+
+    return achados;
+  }
+
+  function renderAchados(lista) {
+    const cor = { bom: "#1e7e34", meio: "#e6a817", ruim: "#c0392b" };
+    const icone = { bom: "✓", meio: "!", ruim: "✕" };
+    return lista.map(a => `<div class="mcspy-seo-item"><b style="color:${cor[a.nivel]}">${icone[a.nivel]}</b><span>${escapeHtml(a.txt)}</span></div>`).join("");
+  }
+
+  function renderSeoPanel(ad) {
+    const t = ad.title || "";
+    const visivel = escapeHtml(t.slice(0, 60));
+    const cortado = escapeHtml(t.slice(60));
+    return `<div class="mcspy-seo">
+      <h3>🔤 Título</h3>
+      <div class="mcspy-seo-preview">${visivel}${cortado ? `<span class="mcspy-seo-cut">${cortado}</span>` : ""}</div>
+      <p class="mcspy-muted" style="margin:2px 0 8px">${cortado ? "O trecho esmaecido é o que costuma ser cortado na listagem de busca." : "Cabe inteiro na listagem de busca."}</p>
+      ${renderAchados(diagnosticarTitulo(t))}
+
+      <h3 style="margin-top:14px">📄 Descrição</h3>
+      ${renderAchados(diagnosticarDescricao(ad.description, t))}
+
+      <h3 style="margin-top:14px">📊 Posição na busca</h3>
+      <p class="mcspy-muted" style="margin:0 0 6px">Procura este anúncio nos primeiros 200 resultados do termo abaixo. Posição só significa algo junto do termo que a produziu — ajuste antes de consultar.</p>
+      <div class="mcspy-edit-field"><input type="text" id="seo-query" value="${escapeHtml(sugerirConsulta(t))}"/></div>
+      <button class="mcspy-btn mcspy-btn-primary" id="btn-seo-rank" style="width:100%">Ver posição</button>
+      <div class="mcspy-result" id="seo-rank-result"></div>
     </div>`;
   }
-  function setupEditHandlers(container, ad) {
-    container.querySelector("#btn-cancel-edit")?.addEventListener("click", () => renderPanel());
-    container.querySelector("#btn-optimize-desc")?.addEventListener("click", () => {
-      const desc = container.querySelector("#edit-description")?.value.trim() || ad.description || "";
-      if (!desc) return;
-      const optResult = container.querySelector("#optimize-result");
-      const optText = container.querySelector("#optimized-text");
-      optResult.style.display = "block";
-      let optimized = desc;
-      if (!/frete grátis/i.test(desc.toLowerCase())) optimized += "\n\n🚚 ENVIO IMEDIATO - Frete Grátis para todo Brasil!";
-      if (!/[•\-\*]/.test(desc)) optimized = optimized.replace(/\n\n/g, "\n• ").replace(/\n/g, "\n• ");
-      if (!/garantia/i.test(desc.toLowerCase())) optimized += "\n\n✅ GARANTIA DE SATISFAÇÃO - Se não gostar, devolvemos!";
-      if (optimized.length < 300) optimized += `\n\n📋 Especificações:\n${Object.entries(ad.specs||{}).slice(0,8).map(([k,v])=>`• ${k}: ${v}`).join("\n")}`;
-      optText.textContent = optimized;
-      container.querySelector("#btn-use-optimized").addEventListener("click", () => {
-        container.querySelector("#edit-description").value = optimized;
-        optResult.style.display = "none";
-        toast("Descrição otimizada!");
-      });
-    });
-    container.querySelector("#btn-save-changes")?.addEventListener("click", async () => {
-      const title = container.querySelector("#edit-title")?.value.trim();
-      const price = container.querySelector("#edit-price")?.value;
-      const stock = container.querySelector("#edit-stock")?.value;
-      const description = container.querySelector("#edit-description")?.value.trim();
-      if (!title && !price && !description && !stock) return;
-      const resultBox = container.querySelector("#edit-result");
-      resultBox.innerHTML = `<p class="mcspy-muted">Salvando...</p>`;
-      const changes = [];
-      if (title && title !== ad.title) {
-        const r = await callMcp("raw", { path: `/items/${ad.itemId}`, method: "PUT", body: { title }, meliUserId: storeCache?.meliUserId || undefined });
-        changes.push({ field: "Título", ok: r.ok, error: r.ok ? null : (r.data?.error || r.data?.message || '400') });
+
+  function setupSeoHandlers(container, ad) {
+    container.querySelector("#btn-seo-rank")?.addEventListener("click", async () => {
+      const box = container.querySelector("#seo-rank-result");
+      const q = container.querySelector("#seo-query")?.value.trim();
+      if (!q) { box.innerHTML = `<p class="mcspy-muted">Informe um termo.</p>`; return; }
+      if (!ad.itemId) { box.innerHTML = `<p class="mcspy-muted">Não identifiquei o ID deste anúncio.</p>`; return; }
+
+      const store = await getStore();
+      if (!store.apiKey) { box.innerHTML = `<p class="mcspy-muted">Precisa da API key nas opções para consultar a busca.</p>`; return; }
+
+      const PAGINA = 50, MAX = 200;
+      let total = null;
+      for (let offset = 0; offset < MAX; offset += PAGINA) {
+        box.innerHTML = `<p class="mcspy-muted">Procurando… ${offset + 1}–${offset + PAGINA}</p>`;
+        const r = await chrome.runtime.sendMessage({ type: "CALL_MCP", action: "search", params: { q, limit: PAGINA, offset } });
+        if (!r?.ok) { box.innerHTML = `<p class="mcspy-muted">❌ ${escapeHtml(r?.error || "Falha na busca")}</p>`; return; }
+        const results = r.data?.results || [];
+        if (total == null) total = r.data?.paging?.total ?? null;
+        const i = results.findIndex(x => String(x.id).toUpperCase() === ad.itemId.toUpperCase());
+        if (i >= 0) {
+          const pos = offset + i + 1;
+          const pagina = Math.ceil(pos / 50);
+          box.innerHTML = `
+            <div class="mcspy-row"><span>Posição</span><b style="color:#1e7e34;font-size:16px">${pos}º</b></div>
+            <div class="mcspy-row"><span>Página da busca</span><b>${pagina}</b></div>
+            ${total != null ? `<div class="mcspy-row"><span>Anúncios no termo</span><b>${total.toLocaleString("pt-BR")}</b></div>` : ""}
+            <p class="mcspy-muted" style="margin-top:6px">Para "${escapeHtml(q)}", sem filtro e sem personalização. O que você vê logado na sua conta pode diferir.</p>`;
+          return;
+        }
+        if (results.length < PAGINA) break; // acabaram os resultados antes do teto
       }
-      if (price && Math.abs(Number(price) - (ad.price||0)) > 0.001) {
-        const r = await callMcp("raw", { path: `/items/${ad.itemId}`, method: "PUT", body: { price: Number(price) }, meliUserId: storeCache?.meliUserId || undefined });
-        changes.push({ field: "Preço", ok: r.ok, error: r.ok ? null : (r.data?.error || r.data?.message || '400') });
-      }
-      if (stock && Number(stock) > 0) {
-        const r = await callMcp("raw", { path: `/items/${ad.itemId}`, method: "PUT", body: { available_quantity: Number(stock) }, meliUserId: storeCache?.meliUserId || undefined });
-        changes.push({ field: "Estoque", ok: r.ok, error: r.ok ? null : (r.data?.error || r.data?.message || '400') });
-      }
-      if (description && description !== ad.description) {
-        // ML API requires plain_text, not text
-        const plainText = description.replace(/<[^>]*>/g, '').replace(/[^\x00-\x7FáàâãéèêíìóòôõúùûçÁÀÂÃÉÈÊÍÌÓÒÔÕÚÙÛÇ\s\w\d,.!?;:()\-+"'/\n\r\t]/g, '');
-        const r = await callMcp("update_description", { item_id: ad.itemId, plain_text: plainText || description });
-        changes.push({ field: "Descrição", ok: r.ok, error: r.error });
-      }
-      resultBox.innerHTML = changes.map(c => `<div class="mcspy-row"><span>${c.field}</span><b style="color:${c.ok?'#1e7e34':'#c0392b'}">${c.ok?'✅ Salvo':'❌ '+escapeHtml(String(c.error||"erro"))}</b></div>`).join("");
-      if (changes.some(c => c.ok)) { toast("Salvo!"); cachedAd = null; setTimeout(() => renderPanel(), 2000); }
-    });
-  }
-
-  // ========== MEDIA PANEL ==========
-  function renderMediaPanel(ad) {
-    return `<div class="mcspy-media"><h3>🎨 Editor de Mídia</h3>
-      <div class="mcspy-media-section"><h4>🖼️ Fotos (${(ad.images||[]).length})</h4>
-        <div class="mcspy-media-grid">${(ad.images||[]).slice(0,6).map(url => `<div class="mcspy-media-thumb"><img src="${escapeHtml(url)}" loading="lazy"/></div>`).join("")}</div>
-        <div class="mcspy-actions">
-          <button class="mcspy-btn mcspy-btn-primary" id="btn-photo-generate">📸 Gerar +Fotos (IA)</button>
-          <button class="mcspy-btn" id="btn-photo-remove-bg">🔲 Remover fundo</button>
-          <button class="mcspy-btn" id="btn-photo-replace-logo">🏷️ Substituir logo</button>
-        </div>
-        <div class="mcspy-credit-info" id="photo-credits">🪙 <span id="credits-display">...</span> créditos</div>
-        <div id="media-photo-result" class="mcspy-result"></div>
-      </div>
-      <div class="mcspy-media-section"><h4>🎬 Vídeos</h4>
-        <div class="mcspy-actions"><button class="mcspy-btn mcspy-btn-primary" id="btn-video-ugc">✨ Gerar Vídeo UGC (IA)</button></div>
-        <p class="mcspy-muted" style="margin-top:4px">Vídeo vertical 9:16 TikTok. 10 créditos IA.</p>
-        <div id="media-video-result" class="mcspy-result"></div>
-      </div>
-    </div>`;
-  }
-  async function setupMediaHandlers(container, ad, creds) {
-    const photoResult = container.querySelector("#media-photo-result");
-    const videoResult = container.querySelector("#media-video-result");
-    const creditsDisplay = container.querySelector("#credits-display");
-    if (creditsDisplay && creds) creditsDisplay.textContent = creds.aiCredits || creds.credits || "?";
-
-    container.querySelector("#btn-photo-generate")?.addEventListener("click", async () => {
-      const c = await refreshCredits();
-      if (creditsDisplay) creditsDisplay.textContent = c.aiCredits || c.credits || "?";
-      photoResult.innerHTML = `<p class="mcspy-muted">Quantas fotos?</p><div class="mcspy-photo-count">${[1,2,3].map(n => `<button class="mcspy-btn ${n===2?'mcspy-btn-primary':''}" data-count="${n}">${n} foto${n>1?'s':''}</button>`).join("")}</div>`;
-      photoResult.querySelectorAll("[data-count]").forEach(btn => btn.addEventListener("click", async () => {
-        photoResult.innerHTML = `<p class="mcspy-muted">Gerando ${btn.dataset.count} foto(s)...</p>`;
-        const r = await callMcp("photo_generate", { image_url: ad.images[0]||"", marketplace:"meli", item_id: ad.itemId, photo_count: Number(btn.dataset.count) });
-        if (r.ok) {
-          // photo_generate returns nested format after Lambda+Edge unwrapping
-          const raw = r.data;
-          const urls = raw?.data?.urls || raw?.urls || raw?.images || (raw?.url ? [raw.url] : []) || [];
-          if (urls.length) {
-            photoResult.innerHTML = `<div class="mcspy-media-grid">${urls.map(u => `<div><img src="${escapeHtml(u)}" style="width:100%;border-radius:6px"/></div>`).join("")}</div><p class="mcspy-muted">✅ ${urls.length} foto(s) gerada(s)!</p>`;
-          } else {
-            const errMsg = raw?.error || raw?.data?.error || "Falha desconhecida";
-            photoResult.innerHTML = `<p class="mcspy-muted">❌ ${escapeHtml(errMsg)}</p><p class="mcspy-muted" style="font-size:10px">A IA não conseguiu processar esta imagem. Tente com outra foto do produto.</p>`;
-          }
-          const c2 = await refreshCredits(); if (creditsDisplay) creditsDisplay.textContent = c2.aiCredits || c2.credits || "?";
-        } else { photoResult.innerHTML = `<p class="mcspy-muted">❌ ${r.error||"Falha"}</p>`; }
-      }));
-    });
-
-    container.querySelector("#btn-photo-remove-bg")?.addEventListener("click", async () => {
-      if (!ad.images.length) return;
-      photoResult.innerHTML = `<p class="mcspy-muted">Removendo fundo...</p>`;
-      const r = await callMcp("photo_remove_bg", { image_url: ad.images[0], marketplace:"meli", item_id: ad.itemId });
-      photoResult.innerHTML = r.ok ? `<div><img src="${escapeHtml(r.data?.url||r.data?.image_url||"")}" style="width:100%;border-radius:6px"/></div><p class="mcspy-muted">✅ Fundo removido.</p>` : `<p class="mcspy-muted">❌ ${escapeHtml(r.error||"Falha")}</p>`;
-    });
-
-    container.querySelector("#btn-photo-replace-logo")?.addEventListener("click", () => {
-      photoResult.innerHTML = `<div class="mcspy-edit-field"><label>URL do logo</label><input type="text" id="input-logo-url" placeholder="https://..."/></div><button class="mcspy-btn mcspy-btn-primary" id="btn-do-replace-logo">Aplicar</button>`;
-      container.querySelector("#btn-do-replace-logo")?.addEventListener("click", async () => {
-        const logoUrl = container.querySelector("#input-logo-url")?.value.trim();
-        if (!logoUrl) return;
-        photoResult.innerHTML = `<p class="mcspy-muted">Aplicando...</p>`;
-        const r = await callMcp("photo_replace_logo", { image_url: ad.images[0], replacement_logo: logoUrl, marketplace:"meli", item_id: ad.itemId });
-        photoResult.innerHTML = r.ok ? `<div><img src="${escapeHtml(r.data?.url||r.data?.image_url||"")}" style="width:100%;border-radius:6px"/></div><p class="mcspy-muted">✅ Logo aplicado.</p>` : `<p class="mcspy-muted">❌ ${escapeHtml(r.error||"Falha")}</p>`;
-      });
-    });
-
-    container.querySelector("#btn-video-ugc")?.addEventListener("click", async () => {
-      if (!ad.images[0]) { videoResult.innerHTML = `<p class="mcspy-muted">❌ Sem imagem.</p>`; return; }
-      videoResult.innerHTML = `<p class="mcspy-muted">Analisando e gerando...</p>`;
-      const r = await callMcp("video_generate_guided", { product_url: ad.images[0], item_title: ad.title, item_id: ad.itemId, marketplace:"meli" });
-      if (r.ok) {
-        const d = r.data||{};
-        if (d.step==="suggest_parameters") videoResult.innerHTML = `<p class="mcspy-muted">Sugestões:</p><div class="mcspy-row"><span>Persona</span><b>${escapeHtml(d.suggested_persona||"")}</b></div><div class="mcspy-row"><span>Estilo</span><b>${escapeHtml(d.suggested_style||"")}</b></div>`;
-        else if (d.step==="generating"||d.job_id) videoResult.innerHTML = `<div class="mcspy-row"><span>Job</span><b>${escapeHtml(String(d.job_id||""))}</b></div><p class="mcspy-muted">🎬 Processando (2-5 min).</p>`;
-        else videoResult.innerHTML = `<p class="mcspy-muted">${escapeHtml(JSON.stringify(d))}</p>`;
-      } else { videoResult.innerHTML = `<p class="mcspy-muted">❌ ${escapeHtml(r.error||"Falha")}</p>`; }
+      box.innerHTML = `<p class="mcspy-muted">Não apareceu nos primeiros ${MAX} resultados de "${escapeHtml(q)}"${total != null ? ` (${total.toLocaleString("pt-BR")} anúncios no termo)` : ""}.</p>
+        <p class="mcspy-muted" style="font-size:10px">Termo muito genérico costuma dar isso. Tente algo mais próximo do que o comprador digitaria para achar este produto especificamente.</p>`;
     });
   }
 
@@ -772,48 +644,6 @@
       try { injectPageGauges(scrapeCurrentAd()); } catch(_) {}
       injectPanel();
       try { chrome.runtime.sendMessage({ type: "PASSIVE_SNAPSHOT", ad: scrapeCurrentAd() }); } catch(_) {}
-      // Async: check if own listing and show inline action buttons
-      setTimeout(async () => {
-        const ad = scrapeCurrentAd();
-        if (!ad.itemId) return;
-        const state = await new Promise(r => chrome.runtime.sendMessage({ type: "GET_STATE_FOR_ITEM", itemId: ad.itemId }, r));
-        if (state?.isOwn) {
-          const actionsEl = document.getElementById("mcspy-own-actions");
-          if (actionsEl) actionsEl.style.display = "flex";
-          // Wire inline buttons
-          const btnEdit = document.getElementById("mcspy-btn-edit-inline");
-          const btnPhotos = document.getElementById("mcspy-btn-photos-inline");
-          const btnVideo = document.getElementById("mcspy-btn-video-inline");
-          btnEdit?.addEventListener("click", () => {
-            injectPanel();
-            const p = shadowRoot?.querySelector(".mcspy-panel");
-            if (p) { p.classList.remove("mcspy-hidden"); renderPanel(); }
-            // Click Edit tab after render
-            setTimeout(() => {
-              const editTab = shadowRoot?.querySelector('[data-panel="panel-edit"]');
-              editTab?.click();
-            }, 300);
-          });
-          btnPhotos?.addEventListener("click", async () => {
-            injectPanel();
-            const p = shadowRoot?.querySelector(".mcspy-panel");
-            if (p) { p.classList.remove("mcspy-hidden"); renderPanel(); }
-            setTimeout(() => {
-              const mediaTab = shadowRoot?.querySelector('[data-panel="panel-media"]');
-              if (mediaTab) { mediaTab.click(); setTimeout(() => document.getElementById("btn-photo-generate")?.click(), 400); }
-            }, 300);
-          });
-          btnVideo?.addEventListener("click", async () => {
-            injectPanel();
-            const p = shadowRoot?.querySelector(".mcspy-panel");
-            if (p) { p.classList.remove("mcspy-hidden"); renderPanel(); }
-            setTimeout(() => {
-              const mediaTab = shadowRoot?.querySelector('[data-panel="panel-media"]');
-              if (mediaTab) { mediaTab.click(); setTimeout(() => document.getElementById("btn-video-ugc")?.click(), 400); }
-            }, 300);
-          });
-        }
-      }, 1500);
     }
     if (isSearchPage()) {
       setTimeout(() => injectBulkMonitor(), 1200);

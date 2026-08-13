@@ -630,18 +630,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         sendResponse(r);
         return;
       }
-      // Saldo de créditos de IA. Vai pelo MCP (action ai_credits_status), não
-      // direto na Lambda: um host a menos declarado no manifest, e o
-      // desembrulho do envelope da Function URL fica do lado do servidor.
-      case "GET_AI_CREDITS": {
-        const { apiKey } = await getStore();
-        if (!apiKey) { sendResponse({ credits: 0, can_generate: false, recent_jobs: [] }); return; }
-        const r = await callAction(apiKey, "ai_credits_status", {});
-        if (!r.ok) { sendResponse({ credits: 0, can_generate: false, recent_jobs: [] }); return; }
-        const credits = Number(r.data?.credits) || 0;
-        sendResponse({ credits, can_generate: credits >= 10, recent_jobs: r.data?.recent_jobs || [] });
-        return;
-      }
+      // Saldo de créditos de IA saiu junto com a geração de mídia: a extensão
+      // não consome crédito de IA em lugar nenhum.
       default:
         sendResponse({ error: "unknown message type" });
     }
