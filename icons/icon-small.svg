@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3479DC"/>
+      <stop offset="1" stop-color="#1F4F9C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Variante para 16px. Mesmo desenho do icon.svg, com metade do detalhe:
+       três barras finas viram mancha nesse tamanho, então ficam duas grossas.
+       A lente também cresceu, porque o que identifica em 16px é a silhueta. -->
+  <rect x="0" y="0" width="128" height="128" rx="26" fill="url(#bg)"/>
+
+  <circle cx="53" cy="51" r="32" fill="none" stroke="#FFFFFF" stroke-width="12"/>
+  <line x1="76" y1="74" x2="102" y2="100" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+
+  <rect x="40" y="52" width="12" height="19" rx="3" fill="#FFFFFF"/>
+  <rect x="58" y="34" width="12" height="37" rx="3" fill="#E6A817"/>
+</svg>

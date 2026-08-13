@@ -20,7 +20,7 @@ zip -r -q "$OUT" \
   popup \
   options \
   icons \
-  -x '*.DS_Store' '*/.*'
+  -x '*.DS_Store' '*/.*' '*.svg'
 
 echo "Pacote: $OUT"
 unzip -l "$OUT" | tail -n 1

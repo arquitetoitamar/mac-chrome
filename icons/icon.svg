@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3479DC"/>
+      <stop offset="1" stop-color="#1F4F9C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fundo: mesmo azul da interface do painel, não o amarelo antigo -->
+  <rect x="4" y="4" width="120" height="120" rx="27" fill="url(#bg)"/>
+
+  <!-- Lente da lupa. O traço é grosso de propósito: em 16px o miolo some e
+       o que precisa sobreviver é a silhueta anel + cabo. -->
+  <circle cx="55" cy="53" r="29" fill="none" stroke="#FFFFFF" stroke-width="9"/>
+  <line x1="76" y1="74" x2="99" y2="97" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
+
+  <!-- Barras dentro da lente: análise, não busca. A mais alta em âmbar
+       amarra com a marca e dá o ponto de cor que o azul sozinho não tem. -->
+  <g>
+    <rect x="41" y="56" width="8" height="13" rx="2.5" fill="#FFFFFF"/>
+    <rect x="53" y="47" width="8" height="22" rx="2.5" fill="#FFFFFF"/>
+    <rect x="65" y="38" width="8" height="31" rx="2.5" fill="#E6A817"/>
+  </g>
+</svg>
