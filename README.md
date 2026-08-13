@@ -32,31 +32,27 @@ redistribua, inclusive comercialmente.
 ## Como é
 
 <p align="center">
-  <img src="assets/prints/01-score-na-pagina.png" alt="Painel de score injetado na página do anúncio" width="820">
+  <img src="assets/prints/score-indicadores.png" alt="Painel de score com os oito indicadores" width="420">
 </p>
 
 O score aparece sozinho na página do anúncio, abaixo do preço — não é preciso
-clicar em nada.
+clicar em nada. Oito indicadores, de 0 a 100 cada.
 
 <p align="center">
-  <img src="assets/prints/03-seo.png" alt="Aba SEO com diagnóstico de título, descrição e posição na busca" width="820">
+  <img src="assets/prints/calculadora.png" alt="Calculadora de margem aberta sobre a página do anúncio" width="860">
 </p>
 
-A aba **SEO** mede título e descrição sem chamar a rede, e é onde fica a
-consulta de posição na busca.
+A **Calculadora** já vem com o preço do concorrente preenchido e devolve o preço
+de venda que fecha a margem que você pediu, o lucro líquido e a diferença
+percentual. Ao lado dela fica a aba **SEO**, que mede título e descrição sem
+chamar a rede e consulta a posição do anúncio na busca.
 
 <p align="center">
-  <img src="assets/prints/04-calculadora.png" alt="Calculadora de margem" width="820">
+  <img src="assets/prints/popup-concorrentes.png" alt="Popup com os concorrentes monitorados" width="420">
 </p>
 
-A **Calculadora** parte do preço do concorrente já preenchido e devolve o preço
-de venda que fecha a margem que você pediu.
-
-<p align="center">
-  <img src="assets/prints/07-popup-concorrentes.png" alt="Popup com concorrentes monitorados" width="560">
-</p>
-
-No popup da barra ficam os concorrentes monitorados, com o histórico de preço.
+No popup da barra ficam os concorrentes monitorados, com o preço verificado e a
+data da última checagem.
 
 ## Como instalar (modo desenvolvedor)
 

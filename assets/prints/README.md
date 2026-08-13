@@ -4,18 +4,16 @@ Capturas usadas no README e na ficha da Chrome Web Store.
 
 | Arquivo | O que mostra |
 |---|---|
-| `01-score-na-pagina.png` | Painel de score injetado na página do anúncio, abaixo do preço |
-| `02-painel-info.png` | Painel flutuante, aba Info — diagnóstico e dados do anúncio |
-| `03-seo.png` | Aba SEO — título, descrição e posição na busca |
-| `04-calculadora.png` | Aba Calculadora de margem |
-| `05-gauges.png` | Detalhe dos 8 indicadores |
-| `06-popup-anuncio.png` | Popup da barra de ferramentas, aba Este anúncio |
-| `07-popup-concorrentes.png` | Popup, aba Concorrentes |
-| `08-popup-conta.png` | Popup, aba Minha conta |
-| `09-opcoes.png` | Tela de opções — chave de API e monitoramento |
+| `score-indicadores.png` | Os 8 indicadores de qualidade, detalhe do painel na página |
+| `calculadora.png` | Página do anúncio com a Calculadora de margem aberta |
+| `popup-concorrentes.png` | Popup da barra, aba Concorrentes, com o painel Info ao fundo |
+| `popup-anuncio.png` | Popup da barra, aba Este anúncio |
+| `popup-conta.png` | Popup da barra, aba Minha conta |
 
-Os nomes atuais são os que vieram da captura (`2.png`, `3.png`…). O que importa
-é o conteúdo — `scripts/assets-loja.py` mapeia arquivo → legenda.
+Faltam duas que valeriam a pena: a **página inteira com o score** e a **aba
+SEO**. A aba SEO é o que distingue esta extensão das outras — se surgir o print,
+ela entra no lugar de `popup-conta.png`.
+
 
 **Para a Chrome Web Store:** a loja exige 1280×800 ou 640×400 exatos, no máximo
 cinco capturas, em 24 bits sem alfa. Print de janela nunca sai nessa medida, e

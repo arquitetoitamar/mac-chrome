@@ -29,15 +29,15 @@ REG = "/System/Library/Fonts/Supplemental/Arial.ttf"
 # A ordem é a ordem da vitrine. A primeira é a que decide se a pessoa instala,
 # então abre com o que é a assinatura do produto: os oito indicadores.
 CAPTURAS = [
-    ("2.png", "8 indicadores de qualidade, de 0 a 100",
+    ("score-indicadores.png", "8 indicadores de qualidade, de 0 a 100",
      "Descrição, imagens, SEO do título, especificações, benefícios, estrutura, inclusos e confiança."),
-    ("4.png", "O preço que fecha a sua margem",
+    ("calculadora.png", "O preço que fecha a sua margem",
      "Informe custo, comissão, frete e imposto. Sai o preço de venda, o lucro líquido e a diferença para o concorrente."),
-    ("5.png", "Acompanhe o preço dos concorrentes",
+    ("popup-concorrentes.png", "Acompanhe o preço dos concorrentes",
      "Marque um anúncio e a extensão passa a registrar preço, vendas e avaliação ao longo do tempo."),
-    ("3.png", "Os números do anúncio, num clique",
+    ("popup-anuncio.png", "Os números do anúncio, num clique",
      "Preço, vendidos, receita estimada, avaliação e posição na categoria — na barra de ferramentas."),
-    ("6.png", "Conecte a conta para comparar",
+    ("popup-conta.png", "Conecte a conta para comparar",
      "Com a chave de API você compara seu preço com o do catálogo e consulta a posição na busca."),
 ]
 
