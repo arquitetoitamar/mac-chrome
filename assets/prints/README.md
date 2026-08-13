@@ -14,6 +14,18 @@ Capturas usadas no README e na ficha da Chrome Web Store.
 | `08-popup-conta.png` | Popup, aba Minha conta |
 | `09-opcoes.png` | Tela de opções — chave de API e monitoramento |
 
-**Para a Chrome Web Store:** a loja exige 1280×800 (ou 640×400) exatos.
-Capturas de janela raramente saem nessa medida — `scripts/prints-loja.sh`
-enquadra cada uma em 1280×800 sem distorcer, centralizando sobre fundo branco.
+Os nomes atuais são os que vieram da captura (`2.png`, `3.png`…). O que importa
+é o conteúdo — `scripts/assets-loja.py` mapeia arquivo → legenda.
+
+**Para a Chrome Web Store:** a loja exige 1280×800 ou 640×400 exatos, no máximo
+cinco capturas, em 24 bits sem alfa. Print de janela nunca sai nessa medida, e
+dois destes são recortes pequenos que ficariam borrados se esticados. Então
+`scripts/assets-loja.py` compõe cada um: fundo da marca, título, linha de apoio
+e o print com sombra, dimensionado para ocupar a área sem estourar.
+
+O mesmo script gera o bloco promocional (440×280) e o letreiro (1400×560).
+Saída em `store-assets/`, fora do pacote da extensão.
+
+```bash
+python3 scripts/assets-loja.py
+```
