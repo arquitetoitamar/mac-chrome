@@ -4,8 +4,11 @@ function escapeHtml(s) {
   })[c]);
 }
 
+// toFixed(2) cru virava "R$ 57990.00" na receita estimada — ponto decimal e
+// sem separador de milhar, que em tela pt-BR lê como erro.
 function fmtMoney(n) {
-  return n == null ? "—" : `R$ ${Number(n).toFixed(2)}`;
+  if (n == null) return "—";
+  return `R$ ${Number(n).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function fmtDate(ts) {

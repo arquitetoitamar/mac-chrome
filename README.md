@@ -29,6 +29,35 @@ Não há build step, minificação nem código remoto — o JavaScript do pacote
 publicado é exatamente o que está aqui. Licença MIT: use, modifique e
 redistribua, inclusive comercialmente.
 
+## Como é
+
+<p align="center">
+  <img src="assets/prints/01-score-na-pagina.png" alt="Painel de score injetado na página do anúncio" width="820">
+</p>
+
+O score aparece sozinho na página do anúncio, abaixo do preço — não é preciso
+clicar em nada.
+
+<p align="center">
+  <img src="assets/prints/03-seo.png" alt="Aba SEO com diagnóstico de título, descrição e posição na busca" width="820">
+</p>
+
+A aba **SEO** mede título e descrição sem chamar a rede, e é onde fica a
+consulta de posição na busca.
+
+<p align="center">
+  <img src="assets/prints/04-calculadora.png" alt="Calculadora de margem" width="820">
+</p>
+
+A **Calculadora** parte do preço do concorrente já preenchido e devolve o preço
+de venda que fecha a margem que você pediu.
+
+<p align="center">
+  <img src="assets/prints/07-popup-concorrentes.png" alt="Popup com concorrentes monitorados" width="560">
+</p>
+
+No popup da barra ficam os concorrentes monitorados, com o histórico de preço.
+
 ## Como instalar (modo desenvolvedor)
 
 1. Abra `chrome://extensions` no Chrome.

@@ -410,13 +410,16 @@
   // Consulta sugerida: o que sobra do título depois de tirar conectivo e
   // palavra de vitrine. É sugestão — o campo fica editável porque posição só
   // significa alguma coisa junto do termo que a produziu.
+  // A normaliza\u00e7\u00e3o serve s\u00f3 para casar com a lista de descarte; a palavra que
+  // volta \u00e9 a original. Tirar acento do que aparece na tela fazia "muscula\u00e7\u00e3o"
+  // virar "musculacao", que o usu\u00e1rio l\u00ea como defeito antes de ler como termo.
   function sugerirConsulta(title) {
+    const semAcento = w => w.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     return (title || "")
       .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^\w\s]/g, " ")
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
       .split(/\s+/)
-      .filter(w => w.length > 2 && !STOPWORDS.has(w))
+      .filter(w => w.length > 2 && !STOPWORDS.has(semAcento(w)))
       .slice(0, 5)
       .join(" ");
   }
