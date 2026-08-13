@@ -1,0 +1,7 @@
+/* Marketplace Connect — Análise de Produtos: estilos do host da página.
+   O painel principal roda dentro de uma Shadow DOM (ver content.js),
+   então este arquivo só garante que o host flutuante não seja afetado
+   pelo CSS do Mercado Livre. */
+#mcspy-root-host {
+  all: initial;
+}

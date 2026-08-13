@@ -1,0 +1,86 @@
+* { box-sizing: border-box; }
+body {
+  width: 340px;
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #222;
+  font-size: 13px;
+}
+.mcspy-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #2968c8;
+  color: #fff;
+  font-weight: 600;
+}
+.mcspy-top span { flex: 1; }
+.mcspy-top button {
+  background: none; border: none; color: #fff; cursor: pointer; font-size: 15px;
+}
+.mcspy-tabs {
+  display: flex;
+  border-bottom: 1px solid #eee;
+}
+.mcspy-tab {
+  flex: 1;
+  padding: 8px 4px;
+  border: none;
+  background: #fafafa;
+  cursor: pointer;
+  font-size: 12px;
+  border-bottom: 2px solid transparent;
+}
+.mcspy-tab.active {
+  border-bottom: 2px solid #2968c8;
+  background: #fff;
+  font-weight: 600;
+}
+main { max-height: 460px; overflow-y: auto; }
+.mcspy-panel-tab { display: none; padding: 12px; }
+.mcspy-panel-tab.active { display: block; }
+
+.mcspy-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; }
+.mcspy-row span { color: #666; }
+.mcspy-muted { color: #888; font-size: 12px; }
+.mcspy-title { font-weight: 600; margin-bottom: 8px; line-height: 1.35; }
+
+.mcspy-comp-card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+.mcspy-comp-card .mcspy-comp-title {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 4px;
+  display: block;
+  color: #222;
+  text-decoration: none;
+}
+.mcspy-comp-card .mcspy-comp-title:hover { text-decoration: underline; }
+.mcspy-comp-meta { font-size: 11px; color: #888; margin-bottom: 6px; }
+.mcspy-comp-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
+.mcspy-comp-actions button {
+  font-size: 11px; padding: 4px 8px; border-radius: 6px; border: 1px solid #ddd; background: #f7f7f7; cursor: pointer;
+}
+.mcspy-delta-up { color: #c0392b; font-weight: 600; }
+.mcspy-delta-down { color: #1e7e34; font-weight: 600; }
+
+.mcspy-btn {
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f7f7f7;
+  cursor: pointer;
+  font-size: 12px;
+}
+.mcspy-btn:hover { background: #efefef; }
+.mcspy-btn-primary { background: #2968c8; color: #fff; border-color: #2968c8; }
+.mcspy-btn-primary:hover { background: #1f4f9c; }
+
+.mcspy-empty { text-align: center; color: #999; padding: 20px 8px; font-size: 12px; }

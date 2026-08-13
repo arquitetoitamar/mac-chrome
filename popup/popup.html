@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Análise de Produtos</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="mcspy-top">
+    <img src="../icons/icon48.png" alt="" width="24" height="24" />
+    <span>Análise de Produtos</span>
+    <button id="btn-options" title="Configurações">⚙️</button>
+  </header>
+
+  <nav class="mcspy-tabs">
+    <button class="mcspy-tab active" data-tab="current">Este anúncio</button>
+    <button class="mcspy-tab" data-tab="competitors">Concorrentes</button>
+    <button class="mcspy-tab" data-tab="account">Minha conta</button>
+  </nav>
+
+  <main>
+    <section id="tab-current" class="mcspy-panel-tab active"></section>
+    <section id="tab-competitors" class="mcspy-panel-tab"></section>
+    <section id="tab-account" class="mcspy-panel-tab"></section>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

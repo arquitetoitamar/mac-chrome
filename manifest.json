@@ -1,0 +1,56 @@
+{
+  "manifest_version": 3,
+  "name": "Marketplace Connect — Análise de Produtos",
+  "short_name": "MC Análise",
+  "version": "1.0.0",
+  "homepage_url": "https://marketplaces.tiops.com.br",
+  "description": "Diagnostica anúncios, monitora preço dos concorrentes, calcula margem e gera fotos e vídeo com IA para os seus próprios anúncios.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Análise de Produtos",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_ui": { "page": "options/options.html", "open_in_tab": true },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.mercadolivre.com.br/*",
+        "https://*.mercadolibre.com/*"
+      ],
+      "exclude_matches": [
+        "https://*.mercadolivre.com.br/gz/*",
+        "https://*.mercadolivre.com.br/help/*"
+      ],
+      "js": ["content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "alarms",
+    "notifications",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://*.mercadolivre.com.br/*",
+    "https://*.mercadolibre.com/*",
+    "https://mcp.tiops.com.br/*"
+  ],
+  "minimum_chrome_version": "110"
+}

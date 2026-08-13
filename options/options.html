@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Análise de Produtos — Configurações</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="wrap">
+    <h1><img src="../icons/icon48.png" width="28" height="28" alt="" /> Análise de Produtos — Configurações</h1>
+
+    <section class="card">
+      <h2>1. Conectar sua conta Marketplace Connect</h2>
+      <p class="muted">
+        Isso permite comparar concorrentes com seus próprios anúncios, e ver vendas, visitas e créditos
+        direto no popup. A chave começa com <code>mc_live_</code> e pode ser gerada em
+        <a href="https://marketplaces.tiops.com.br" target="_blank" rel="noopener">marketplaces.tiops.com.br</a>
+        (Integrações → API Keys).
+      </p>
+      <div class="row">
+        <input type="password" id="input-key" placeholder="mc_live_..." autocomplete="off" />
+        <button id="btn-toggle-key" type="button" title="Mostrar/ocultar">👁</button>
+      </div>
+      <div class="actions">
+        <button id="btn-save" class="primary">Salvar e validar</button>
+        <button id="btn-clear">Remover chave</button>
+      </div>
+      <p id="key-status" class="status"></p>
+    </section>
+
+    <section class="card">
+      <h2>2. Monitoramento de concorrentes</h2>
+      <div class="row">
+        <label for="interval">Verificar preços a cada</label>
+        <select id="interval">
+          <option value="1">1 hora</option>
+          <option value="3">3 horas</option>
+          <option value="6">6 horas</option>
+          <option value="12">12 horas</option>
+          <option value="24">24 horas</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="price-pct">Alertar se o preço variar mais de</label>
+        <input type="number" id="price-pct" min="1" max="50" step="1" style="width:70px" /> %
+      </div>
+      <div class="row">
+        <label for="sold-delta">Alertar se vendidos aumentarem</label>
+        <input type="number" id="sold-delta" min="1" max="1000" step="1" style="width:70px" /> unidades
+      </div>
+      <div class="row">
+        <label for="notif-enabled">Notificações do Chrome</label>
+        <input type="checkbox" id="notif-enabled" />
+      </div>
+      <div class="actions">
+        <button id="btn-save-settings" class="primary">Salvar configurações</button>
+      </div>
+      <p id="settings-status" class="status"></p>
+    </section>
+
+    <section class="card">
+      <h2>Como funciona</h2>
+      <ul>
+        <li>Em qualquer anúncio do Mercado Livre, um botão flutuante 🔍 aparece no canto da tela.</li>
+        <li><b>Analisar</b> busca preço médio, faixa de preço e nº de vendedores concorrendo (quando o link é de catálogo <code>/up/MLBU...</code>) via sua conta Marketplace Connect.</li>
+        <li><b>Estratégia</b> monta um resumo de referência de mercado (categoria, faixa de preço, atributos técnicos esperados) para você usar como base ao escrever o seu próprio anúncio.</li>
+        <li><b>Monitorar concorrente</b> guarda preço, vendidos e avaliação ao longo do tempo — atualizado automaticamente em segundo plano e também toda vez que você revisita a página.</li>
+      </ul>
+    </section>
+  </div>
+  <script type="module" src="options.js"></script>
+</body>
+</html>
